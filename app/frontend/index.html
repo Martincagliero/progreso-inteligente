@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Progreso Inteligente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0b0c10; --panel:#111319; --panel-2:#161a22; --muted:#a8b0bd; --brand:#00d1ff; --brand-2:#0ea5e9; --ok:#22c55e; --warn:#f59e0b;
+      --radius:12px; --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      margin:0; color:#e6edf3; background:
+        radial-gradient(1200px 600px at -10% -10%, rgba(0,209,255,.12), transparent 60%),
+        radial-gradient(1000px 600px at 110% 10%, rgba(14,165,233,.10), transparent 60%),
+        var(--bg);
+      min-height:100vh;
+    }
+    header{
+      border-bottom:1px solid #1e2430; background:linear-gradient(180deg, rgba(17,19,25,.75), rgba(17,19,25,.35)); backdrop-filter:saturate(1.2) blur(8px);
+      position:sticky; top:0; z-index:10;
+    }
+    .nav{ max-width:1180px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; }
+    .brand{ display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.3px; }
+    .brand .logo{ width:36px; height:36px; border-radius:10px; background:conic-gradient(from 210deg, var(--brand), var(--brand-2)); box-shadow:0 0 30px rgba(0,209,255,.25) inset; }
+    .brand span{ font-size:18px; }
+    .links a{ color:#9fb7c9; text-decoration:none; margin-left:18px; font-size:14px; }
+    .links a:hover{ color:#e6edf3 }
+
+    .hero{ max-width:1180px; margin:48px auto; padding:0 20px; display:grid; grid-template-columns: 1.2fr .8fr; gap:28px; align-items:stretch; }
+    .panel{ background:linear-gradient(180deg, var(--panel), var(--panel-2)); border:1px solid #242a36; border-radius:var(--radius); box-shadow:var(--shadow); }
+    .left{ padding:32px 32px 24px; }
+    .title{ font-size:36px; line-height:1.15; margin:0; background:linear-gradient(90deg, #e6edf3, #a3e9ff); color:transparent; -webkit-background-clip:text; background-clip:text; }
+    .subtitle{ color:var(--muted); margin:10px 0 22px; font-size:14px; max-width:56ch }
+    .badges{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+    .badge{ font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid #283041; background:#121722; color:#bcd0e0 }
+
+    form{ display:grid; grid-template-columns: 1fr 1fr; gap:14px 16px; margin-top:6px; }
+    label{ font-size:12px; color:#b5c2d1 }
+    .field{ display:flex; flex-direction:column; gap:6px }
+    input{ padding:12px 12px; border-radius:10px; border:1px solid #2a3242; background:#0e1118; color:#e6edf3; font-size:14px; }
+    input:focus{ outline:2px solid rgba(0,209,255,.25); border-color:#39455c }
+    .full{ grid-column: 1 / -1 }
+    .actions{ grid-column: 1 / -1; display:flex; align-items:center; gap:12px; margin-top:4px; }
+    button{ padding:12px 16px; background:linear-gradient(90deg, var(--brand), var(--brand-2)); color:#00121a; border:none; border-radius:10px; font-weight:700; cursor:pointer; box-shadow:0 8px 24px rgba(0,209,255,.18); }
+    button:hover{ filter:brightness(1.04) }
+    .hint{ font-size:12px; color:#98a5b5 }
+
+    .right{ position:relative; overflow:hidden; }
+    .gallery{ height:100%; display:grid; grid-template-rows: 1fr 1fr; gap:12px; padding:12px; }
+    .img-card{ position:relative; border-radius:16px; overflow:hidden; border:1px solid #2a3242; background:#0f1218 }
+    .img-card img{ width:100%; height:100%; object-fit:cover; display:block; filter:saturate(1.05) contrast(1.03) }
+    .img-cap{ position:absolute; left:10px; bottom:10px; font-size:12px; color:#cfe8f6; background:rgba(0,0,0,.35); padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.08) }
+
+    .result{ margin-top:18px; padding:18px; border-radius:12px; border:1px solid #273245; background:#111722 }
+    .result h2{ margin:0 0 6px; font-size:18px }
+    .result p{ margin:4px 0; color:#cbd5e1 }
+    .small{ font-size:12px; color:#9fb7c9 }
+    footer{ max-width:1180px; margin:34px auto 60px; padding:0 20px; color:#9fb7c9; font-size:12px }
+
+    @media (max-width: 1024px){ .hero{ grid-template-columns: 1fr; } }
+  </style>
+  <link rel="preconnect" href="https://images.unsplash.com" />
+  <link rel="preconnect" href="https://source.unsplash.com" />
+  <meta name="description" content="Progreso Inteligente: registra tus sesiones, usa RPE y recibe la mejor recomendación de peso." />
+</head>
+<body>
+  <header>
+    <div class="nav">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <span>Progreso Inteligente</span>
+      </div>
+      <div class="links">
+        <a href="#">Inicio</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="https://github.com/Martincagliero" target="_blank" rel="noopener">@Martincagliero</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="hero">
+    <!-- Left panel: text + form -->
+    <section class="panel left">
+      <h1 class="title">Entrená con datos. Progresá con inteligencia.</h1>
+      <p class="subtitle">Ingresa tu sesión y obtené una recomendación de peso basada en RPE y repeticiones. Guardamos un historial simple y te mostramos el promedio de reps de la última semana por ejercicio.</p>
+
+      <form id="sessionForm">
+        <div class="field full">
+          <label for="ejercicio">Ejercicio</label>
+          <input id="ejercicio" name="ejercicio" placeholder="Press banca, Sentadilla, etc." required />
+        </div>
+        <div class="field">
+          <label for="peso_actual">Peso actual (kg)</label>
+          <input id="peso_actual" name="peso_actual" type="number" step="0.25" placeholder="80" required />
+        </div>
+        <div class="field">
+          <label for="reps">Repeticiones</label>
+          <input id="reps" name="reps" type="number" min="1" placeholder="10" required />
+        </div>
+        <div class="field">
+          <label for="rpe">RPE (1–10)</label>
+          <input id="rpe" name="rpe" type="number" min="1" max="10" placeholder="8" required />
+        </div>
+        <div class="actions">
+          <button type="submit">Calcular próximo peso</button>
+          <span class="hint">Tip: si RPE ≤ 7 y 10 reps → +5 kg; RPE 8 y 10 reps → +2.5 kg; RPE 9 → mantener; RPE 10 → −2.5 kg.</span>
+        </div>
+      </form>
+
+      <div id="result" class="result" style="display:none"></div>
+    </section>
+
+    <!-- Right panel: image gallery -->
+    <aside class="panel right">
+      <div class="gallery">
+        <div class="img-card">
+          <img alt="Levantamiento con barra" src="/static/images/barbell.jpg" />
+          <div class="img-cap">Auto-regulación con RPE</div>
+        </div>
+        <div class="img-card" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0; background:none; border:none">
+          <div class="img-card">
+            <img alt="Mancuernas" src="/static/images/dumbbells.jpg" />
+            <div class="img-cap">Progresión simple</div>
+          </div>
+          <div class="img-card">
+            <img alt="Rack de sentadillas" src="/static/images/squat-rack.jpg" />
+            <div class="img-cap">Historial semanal</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer id="como-funciona">
+    <p>Reglas: RPE ≤ 7 y 10 reps → +5 kg; RPE = 8 y 10 reps → +2.5 kg; RPE = 9 → mantener; RPE = 10 → −2.5 kg. Si no aplica, usamos el modelo 6–10 reps.</p>
+  </footer>
+
+  <script>
+    const form = document.getElementById('sessionForm');
+    const resultDiv = document.getElementById('result');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.peso_actual = parseFloat(data.peso_actual);
+      data.reps = parseInt(data.reps, 10);
+      data.rpe = parseInt(data.rpe, 10);
+      try {
+        const res = await fetch('/session', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        if(!res.ok) throw new Error('Error en la solicitud');
+        const json = await res.json();
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+          <h2>${json.ejercicio}</h2>
+          <p><strong>Peso actual:</strong> ${json.peso_actual} kg</p>
+          <p><strong>Recomendado próximo:</strong> <span style="color: var(--ok)">${json.proximo_peso} kg</span></p>
+          <p><strong>Promedio reps semana:</strong> ${json.promedio_reps_semana ?? '—'}</p>
+          <p class="small">RPE usado: ${json.rpe}</p>
+        `;
+        resultDiv.scrollIntoView({behavior:'smooth', block:'center'});
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>
