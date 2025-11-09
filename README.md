@@ -43,7 +43,6 @@ Visita http://localhost:8000
 - [ ] Export de datos
 - [ ] Progressive Web App (PWA)
 
-
 ## 📬 Contacto
 
 **Martín Cagliero**  

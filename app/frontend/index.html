@@ -111,6 +111,36 @@
       </form>
 
       <div id="result" class="result" style="display:none"></div>
+      <hr style="margin:40px 0 28px; border:0; border-top:1px solid #253041" />
+      <h2 style="margin:0 0 14px; font-size:24px">Nutrición (MVP)</h2>
+      <p class="small" style="margin:0 0 18px">Registra tus comidas y revisa macros diarios. Valores por 100g base pre-cargados.</p>
+      <details style="margin-bottom:16px">
+        <summary style="cursor:pointer;font-size:13px;color:#7ec9e6">Alimento personalizado (solo tu navegador)</summary>
+        <form id="foodForm" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; margin-top:12px; background:#121722; padding:14px 16px; border:1px solid #273245; border-radius:10px">
+          <input name="nombre" placeholder="Nombre" required />
+          <input name="kcal_100" type="number" step="0.1" placeholder="kcal/100" required />
+          <input name="prot_100" type="number" step="0.1" placeholder="prot/100" required />
+          <input name="carb_100" type="number" step="0.1" placeholder="carb/100" required />
+          <input name="grasa_100" type="number" step="0.1" placeholder="grasa/100" required />
+          <button type="submit" style="grid-column:1/-1;justify-self:start;padding:10px 14px;background:linear-gradient(90deg,var(--brand),var(--brand-2));border:none;color:#00121a;font-weight:600;border-radius:8px;cursor:pointer">Guardar local</button>
+          <p id="foodMsg" style="grid-column:1/-1;font-size:12px;color:#9fb7c9;margin:4px 0 0"></p>
+        </form>
+      </details>
+      <form id="mealForm" style="display:grid; grid-template-columns:1fr 120px 120px; gap:12px; max-width:620px; margin-bottom:16px">
+        <div style="display:flex; flex-direction:column; gap:6px">
+          <label for="alimento" style="font-size:12px;color:#b5c2d1">Alimento</label>
+          <input list="foodsList" id="alimento" name="alimento" placeholder="Pechuga de pollo" autocomplete="off" required />
+          <datalist id="foodsList"></datalist>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px">
+          <label for="cantidad_g" style="font-size:12px;color:#b5c2d1">Cantidad (g)</label>
+          <input id="cantidad_g" name="cantidad_g" type="number" min="1" step="1" placeholder="150" required />
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; align-self:end">
+          <button type="submit" style="width:100%; padding:12px 10px">Agregar</button>
+        </div>
+      </form>
+      <div id="daySummary" class="result" style="display:none"></div>
     </section>
 
     <!-- Right panel: image gallery -->
@@ -164,6 +194,131 @@
         alert(err.message);
       }
     });
+
+    // Nutrición: carga inicial de alimentos y resumen del día
+    const foodsList = document.getElementById('foodsList');
+    const mealForm = document.getElementById('mealForm');
+    const daySummaryDiv = document.getElementById('daySummary');
+
+    function getLocalCustomFoods(){
+      try { return JSON.parse(localStorage.getItem('customFoods')||'[]'); } catch { return []; }
+    }
+    function saveLocalCustomFood(food){
+      const list = getLocalCustomFoods();
+      // overwrite by nombre case-insensitive
+      const idx = list.findIndex(f => f.nombre.toLowerCase() === food.nombre.toLowerCase());
+      if(idx>=0) list[idx] = food; else list.push(food);
+      localStorage.setItem('customFoods', JSON.stringify(list));
+    }
+    async function loadFoods() {
+      try {
+        const res = await fetch('/foods');
+        const foods = await res.json();
+        const custom = getLocalCustomFoods();
+        const merged = [...foods, ...custom];
+        foodsList.innerHTML = merged.map(f => `<option value="${f.nombre}"></option>`).join('');
+      } catch (e) { /* ignore */ }
+    }
+
+    async function refreshDaySummary() {
+      try {
+        const res = await fetch('/day-summary');
+        const sum = await res.json();
+        daySummaryDiv.style.display = 'block';
+        const comidasHtml = sum.comidas.map(c => `
+          <tr>
+            <td>${c.alimento}</td>
+            <td style="text-align:right">${c.cantidad_g} g</td>
+            <td style="text-align:right">${c.kcal}</td>
+            <td style="text-align:right">${c.prot}</td>
+            <td style="text-align:right">${c.carb}</td>
+            <td style="text-align:right">${c.grasa}</td>
+            <td style="text-align:right"><button class="del" data-id="${c.id}" style="background:#1f2937;color:#e5e7eb;border:1px solid #334155;border-radius:8px;padding:6px 10px;cursor:pointer">Eliminar</button></td>
+          </tr>`).join('');
+        daySummaryDiv.innerHTML = `
+          <h2 style="margin:0 0 10px;font-size:18px">Resumen día ${sum.fecha}</h2>
+          <p style="margin:0 0 12px">Kcal: <strong>${sum.kcal}</strong> | Prot: <strong>${sum.prot}g</strong> | Carb: <strong>${sum.carb}g</strong> | Grasa: <strong>${sum.grasa}g</strong></p>
+          <div style="overflow-x:auto">
+            <table style="width:100%; border-collapse:collapse; font-size:12px">
+              <thead>
+                <tr style="text-align:left; border-bottom:1px solid #273245">
+                  <th style="padding:4px 0">Alimento</th>
+                  <th style="padding:4px 0; text-align:right">Cant</th>
+                  <th style="padding:4px 0; text-align:right">Kcal</th>
+                  <th style="padding:4px 0; text-align:right">Prot</th>
+                  <th style="padding:4px 0; text-align:right">Carb</th>
+                  <th style="padding:4px 0; text-align:right">Grasa</th>
+                  <th style="padding:4px 0; text-align:right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>${comidasHtml || '<tr><td colspan=6 style="padding:6px 0;color:#9fb7c9">Sin comidas registradas hoy.</td></tr>'}</tbody>
+            </table>
+          </div>
+        `;
+      } catch(e) {
+        daySummaryDiv.innerHTML = '<p>Error al cargar resumen.</p>';
+      }
+    }
+
+    // Delegación de eventos para botones eliminar
+    daySummaryDiv.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button.del');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      if (!id) return;
+      try {
+        const res = await fetch(`/meal/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (!json.ok) {
+          alert('No se pudo eliminar la comida');
+          return;
+        }
+        refreshDaySummary();
+      } catch(err) {
+        alert('Error de red al eliminar');
+      }
+    });
+
+    mealForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(mealForm);
+      const payload = {
+        alimento: formData.get('alimento'),
+        cantidad_g: parseFloat(formData.get('cantidad_g')), 
+      };
+      try {
+        const res = await fetch('/meal', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+        const json = await res.json();
+        if(!json.ok) {
+          alert(json.error || 'Error al registrar comida');
+          return;
+        }
+        mealForm.reset();
+        refreshDaySummary();
+      } catch(err) {
+        alert('Error de red');
+      }
+    });
+
+    loadFoods();
+    refreshDaySummary();
+
+    // Crear alimento personalizado
+    const foodForm = document.getElementById('foodForm');
+    const foodMsg = document.getElementById('foodMsg');
+    if (foodForm) {
+      foodForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const fd = new FormData(foodForm);
+        const food = Object.fromEntries(fd.entries());
+        ['kcal_100','prot_100','carb_100','grasa_100'].forEach(k=> food[k] = parseFloat(food[k]));
+        saveLocalCustomFood(food);
+        foodMsg.textContent = 'Guardado local';
+        foodMsg.style.color = '#22c55e';
+        foodForm.reset();
+        loadFoods();
+      });
+    }
   </script>
 </body>
 </html>
