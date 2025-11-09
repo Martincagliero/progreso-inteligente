@@ -15,6 +15,34 @@ Sistema web de recomendación inteligente de peso para entrenamiento basado en R
 - **Frontend**: HTML, CSS, JavaScript (Vanilla)
 - **Deploy**: Render
 
+## 🚀 Demo en Vivo
+
+[Ver proyecto en vivo](https://progreso-inteligente-1.onrender.com)
+
+## 💻 Instalación Local
+
+```bash
+# Clonar repositorio
+git clone https://github.com/Martincagliero/progreso-inteligente.git
+cd progreso-inteligente
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Ejecutar servidor
+python app/main.py
+```
+
+Visita http://localhost:8000
+
+## 🎯 Roadmap
+
+- [ ] Persistencia con base de datos
+- [ ] Sistema de autenticación
+- [ ] Gráficos de progreso
+- [ ] Export de datos
+- [ ] Progressive Web App (PWA)
+
 
 ## 📬 Contacto
 
