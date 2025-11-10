@@ -96,7 +96,16 @@ async def post_meal(data: MealInput):
         except Exception:
             return {"ok": False, "error": "fecha inválida (use YYYY-MM-DD)"}
     try:
-        entry = add_meal(data.alimento, float(data.cantidad_g), fecha_obj)
+        entry = add_meal(
+            data.alimento, 
+            float(data.cantidad_g), 
+            fecha_obj,
+            # Pasar macros opcionales para alimentos personalizados
+            kcal_100=data.kcal_100,
+            prot_100=data.prot_100,
+            carb_100=data.carb_100,
+            grasa_100=data.grasa_100
+        )
     except ValueError as ve:
         return {"ok": False, "error": str(ve)}
     except LookupError:

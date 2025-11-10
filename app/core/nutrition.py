@@ -249,18 +249,42 @@ def add_or_update_food(nombre: str, kcal_100: float, prot_100: float, carb_100: 
     }
 
 
-def add_meal(alimento: str, cantidad_g: float, fecha: Optional[date] = None) -> Dict[str, float | str]:
+def add_meal(
+    alimento: str, 
+    cantidad_g: float, 
+    fecha: Optional[date] = None,
+    # Parámetros opcionales para alimentos personalizados (no en CSV)
+    kcal_100: Optional[float] = None,
+    prot_100: Optional[float] = None,
+    carb_100: Optional[float] = None,
+    grasa_100: Optional[float] = None
+) -> Dict[str, float | str]:
     if cantidad_g <= 0:
         raise ValueError("cantidad_g debe ser > 0")
-    food = _find_food(alimento)
-    if not food:
-        raise LookupError("alimento no encontrado")
+    
+    # Si vienen macros custom, usar esos valores; sino buscar en CSV
+    if all([kcal_100 is not None, prot_100 is not None, carb_100 is not None, grasa_100 is not None]):
+        # Usar macros proporcionados (alimento personalizado)
+        food = Food(
+            nombre=alimento,
+            kcal_100=kcal_100,
+            prot_100=prot_100,
+            carb_100=carb_100,
+            grasa_100=grasa_100
+        )
+    else:
+        # Buscar en alimentos base
+        food = _find_food(alimento)
+        if not food:
+            raise LookupError("alimento no encontrado")
+    
     fecha = fecha or date.today()
     factor = cantidad_g / 100.0
     kcal = round(food.kcal_100 * factor, 2)
     prot = round(food.prot_100 * factor, 2)
     carb = round(food.carb_100 * factor, 2)
     grasa = round(food.grasa_100 * factor, 2)
+
 
     path = meals_path()
     _upgrade_meals_csv_if_needed()

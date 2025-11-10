@@ -282,10 +282,24 @@
     mealForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData(mealForm);
+      const alimento = formData.get('alimento');
       const payload = {
-        alimento: formData.get('alimento'),
+        alimento: alimento,
         cantidad_g: parseFloat(formData.get('cantidad_g')), 
       };
+      
+      // Buscar si es un alimento custom en localStorage
+      const customFoods = getLocalCustomFoods();
+      const customFood = customFoods.find(f => f.nombre.toLowerCase() === alimento.toLowerCase());
+      
+      // Si es custom, agregar macros al payload
+      if (customFood) {
+        payload.kcal_100 = customFood.kcal_100;
+        payload.prot_100 = customFood.prot_100;
+        payload.carb_100 = customFood.carb_100;
+        payload.grasa_100 = customFood.grasa_100;
+      }
+      
       try {
         const res = await fetch('/meal', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
         const json = await res.json();
