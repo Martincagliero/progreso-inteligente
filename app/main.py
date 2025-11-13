@@ -23,12 +23,15 @@ from app.api.nutrition_models import (
     MealInput,
     MealEntry,
     DaySummary,
+    ProductInfo,
 )
 from app.core.nutrition import (
     search_foods,
     add_meal,
     day_summary,
     remove_meal,
+    off_lookup_barcode,
+    off_search,
 )
 
 app = FastAPI(title="Progressive Overload Helper API", version="0.1.0")
@@ -133,6 +136,23 @@ async def get_day_summary(fecha: str | None = None):
         grasa=summary["grasa"],
         comidas=meals,
     )
+
+
+# =====================
+# Open Food Facts (Lookup/Search)
+# =====================
+@app.get("/product-lookup")
+async def product_lookup(barcode: str):
+    prod = off_lookup_barcode(barcode)
+    if not prod:
+        return {"ok": False, "error": "producto no encontrado"}
+    return {"ok": True, "item": ProductInfo(**prod)}
+
+
+@app.get("/product-search", response_model=list[ProductInfo])
+async def product_search(query: str, limit: int = 5):
+    results = off_search(query, limit=limit)
+    return [ProductInfo(**r) for r in results]
 
 
 @app.delete("/meal/{meal_id}")

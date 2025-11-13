@@ -49,3 +49,13 @@ class DaySummary(BaseModel):
     carb: float
     grasa: float
     comidas: List[MealEntry]
+
+
+class ProductInfo(BaseModel):
+    nombre: str
+    marca: Optional[str] = None
+    barcode: Optional[str] = None
+    kcal_100: float
+    prot_100: float
+    carb_100: float
+    grasa_100: float

@@ -114,6 +114,15 @@
       <hr style="margin:40px 0 28px; border:0; border-top:1px solid #253041" />
       <h2 style="margin:0 0 14px; font-size:24px">Nutrición (MVP)</h2>
       <p class="small" style="margin:0 0 18px">Registra tus comidas y revisa macros diarios. Valores por 100g base pre-cargados.</p>
+      <details style="margin-bottom:14px">
+        <summary style="cursor:pointer;font-size:13px;color:#7ec9e6">Buscar producto (Open Food Facts)</summary>
+        <div style="display:grid; grid-template-columns: 1fr 130px 130px; gap:10px; margin-top:10px; background:#121722; padding:14px 16px; border:1px solid #273245; border-radius:10px">
+          <input id="offQuery" placeholder="Código de barras o nombre de producto"/>
+          <button id="btnLookup" style="padding:8px 10px;border-radius:8px;border:1px solid #334155;background:#18212f;color:#e6edf3;cursor:pointer">Por código</button>
+          <button id="btnSearch" style="padding:8px 10px;border-radius:8px;border:1px solid #334155;background:#18212f;color:#e6edf3;cursor:pointer">Por nombre</button>
+          <div id="offResults" class="small" style="grid-column:1/-1;color:#9fb7c9"></div>
+        </div>
+      </details>
       <details style="margin-bottom:16px">
         <summary style="cursor:pointer;font-size:13px;color:#7ec9e6">Alimento personalizado (solo tu navegador)</summary>
         <form id="foodForm" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; margin-top:12px; background:#121722; padding:14px 16px; border:1px solid #273245; border-radius:10px">
@@ -287,12 +296,12 @@
         alimento: alimento,
         cantidad_g: parseFloat(formData.get('cantidad_g')), 
       };
-      
-      // Buscar si es un alimento custom en localStorage
+
+      // Busca si es un alimento custom(es decir, uno q agregue personalizado) en localStorage
       const customFoods = getLocalCustomFoods();
       const customFood = customFoods.find(f => f.nombre.toLowerCase() === alimento.toLowerCase());
-      
-      // Si es custom, agregar macros al payload
+
+      // Si es person, agregar macros
       if (customFood) {
         payload.kcal_100 = customFood.kcal_100;
         payload.prot_100 = customFood.prot_100;
@@ -333,6 +342,65 @@
         loadFoods();
       });
     }
+
+    // Open Food Facts lookup/search
+    const offQuery = document.getElementById('offQuery');
+    const offResults = document.getElementById('offResults');
+    const btnLookup = document.getElementById('btnLookup');
+    const btnSearch = document.getElementById('btnSearch');
+    function renderOffResults(items){
+      if(!items || !items.length){ offResults.innerHTML = '<span>Sin resultados.</span>'; return; }
+      offResults.innerHTML = items.map(it => `
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed #2b3648">
+          <div>
+            <strong>${it.nombre}</strong>${it.marca?` <span style='color:#7aa0b8'>(${it.marca})</span>`:''}
+            <div>Kcal: ${it.kcal_100} | Prot: ${it.prot_100} | Carb: ${it.carb_100} | Grasa: ${it.grasa_100}</div>
+          </div>
+          <button class="useOff" data-item='${JSON.stringify(it).replace(/'/g,"&apos;")}' style="padding:6px 10px;border-radius:8px;border:1px solid #334155;background:#1f2937;color:#e5e7eb;cursor:pointer">Usar</button>
+        </div>
+      `).join('');
+    }
+    async function doLookup(){
+      const code = (offQuery.value||'').trim();
+      if(!code) return;
+      offResults.innerHTML = 'Buscando...';
+      try{
+        const res = await fetch(`/product-lookup?barcode=${encodeURIComponent(code)}`);
+        const json = await res.json();
+        renderOffResults(json.ok && json.item ? [json.item] : []);
+      }catch{ offResults.innerHTML = 'Error de red'; }
+    }
+    async function doSearch(){
+      const q = (offQuery.value||'').trim();
+      if(!q) return;
+      offResults.innerHTML = 'Buscando...';
+      try{
+        const res = await fetch(`/product-search?query=${encodeURIComponent(q)}&limit=5`);
+        const items = await res.json();
+        renderOffResults(items);
+      }catch{ offResults.innerHTML = 'Error de red'; }
+    }
+    btnLookup?.addEventListener('click', doLookup);
+    btnSearch?.addEventListener('click', doSearch);
+    offResults?.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button.useOff');
+      if(!btn) return;
+      try{
+        const it = JSON.parse(btn.getAttribute('data-item').replace(/&apos;/g, "'"));
+        // Guardar en custom foods locales y prellenar formulario
+        saveLocalCustomFood({
+          nombre: it.nombre,
+          kcal_100: it.kcal_100,
+          prot_100: it.prot_100,
+          carb_100: it.carb_100,
+          grasa_100: it.grasa_100,
+        });
+        document.getElementById('alimento').value = it.nombre;
+        document.getElementById('cantidad_g').focus();
+        loadFoods();
+        offResults.innerHTML = '<span style="color:#22c55e">Producto agregado a tu lista local. Ya podés registrarlo.</span>';
+      }catch{ /* ignore */ }
+    });
   </script>
 </body>
 </html>

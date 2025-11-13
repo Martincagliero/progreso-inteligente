@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import uuid
+import httpx
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -194,6 +195,77 @@ def _find_food(nombre: str) -> Optional[Food]:
         if f.nombre.lower() == nombre_l:
             return f
     return None
+
+
+def _normalize_off_product(p: dict) -> Optional[dict]:
+    try:
+        nutr = p.get("nutriments", {})
+        # kcal per 100g: prefer energy-kcal_100g, fallback convert energy_100g (kJ)
+        kcal = nutr.get("energy-kcal_100g")
+        if kcal is None and nutr.get("energy_100g") is not None:
+            try:
+                kcal = float(nutr.get("energy_100g")) / 4.184
+            except Exception:
+                kcal = None
+        prot = nutr.get("proteins_100g")
+        carb = nutr.get("carbohydrates_100g")
+        grasa = nutr.get("fat_100g")
+        if None in (kcal, prot, carb, grasa):
+            return None
+        name = (p.get("product_name") or p.get("generic_name") or "").strip()
+        brand = (p.get("brands") or "").split(",")[0].strip() or None
+        code = p.get("code") or p.get("_id")
+        return {
+            "nombre": name or (brand or "Producto") ,
+            "marca": brand,
+            "barcode": code,
+            "kcal_100": round(float(kcal), 2),
+            "prot_100": round(float(prot), 2),
+            "carb_100": round(float(carb), 2),
+            "grasa_100": round(float(grasa), 2),
+        }
+    except Exception:
+        return None
+
+
+def off_lookup_barcode(barcode: str) -> Optional[dict]:
+    url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
+    try:
+        resp = httpx.get(url, timeout=8.0)
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        prod = data.get("product")
+        if not prod:
+            return None
+        return _normalize_off_product(prod)
+    except Exception:
+        return None
+
+
+def off_search(query: str, limit: int = 5) -> list[dict]:
+    params = {
+        "search_terms": query,
+        "search_simple": 1,
+        "action": "process",
+        "json": 1,
+        "page_size": max(5, limit * 2),
+    }
+    try:
+        resp = httpx.get("https://world.openfoodfacts.org/cgi/search.pl", params=params, timeout=8.0)
+        if resp.status_code != 200:
+            return []
+        products = resp.json().get("products", [])
+        out: list[dict] = []
+        for p in products:
+            norm = _normalize_off_product(p)
+            if norm:
+                out.append(norm)
+            if len(out) >= limit:
+                break
+        return out
+    except Exception:
+        return []
 
 
 def add_or_update_food(nombre: str, kcal_100: float, prot_100: float, carb_100: float, grasa_100: float) -> Dict[str, float | str]:
